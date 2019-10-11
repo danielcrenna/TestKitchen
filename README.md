@@ -4,7 +4,7 @@ TestKitchen is a small library for testing in .NET.
 
 ### Integration Test Logging
 
-To run integration tests with all logging statements redirecting to the console, inherit from `ControllerTest<TStartup`:
+To run integration tests with all logging statements redirecting to the console, inherit from `ControllerTest<TStartup>`:
 
 ```csharp
 public class WeatherForecastControllerTests : ControllerTest<Startup>
