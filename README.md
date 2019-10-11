@@ -9,15 +9,15 @@ To run integration tests with all logging statements redirecting to the console,
 ```csharp
 public class WeatherForecastControllerTests : ControllerTest<Startup>
 {
-	public WeatherForecastControllerTests(SystemUnderTest<Startup> factory, ITestOutputHelper helper) : base(factory, helper) { }
+    public WeatherForecastControllerTests(SystemUnderTest<Startup> factory, ITestOutputHelper helper) : base(factory, helper) { }
 
-	[Fact]
-	public async Task Get()
-	{
-		using var client = Factory.CreateClient();
-		var response = await client.GetAsync("WeatherForecast");
-		Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-	}
+    [Fact]
+    public async Task Get()
+    {
+        using var client = Factory.CreateClient();
+        var response = await client.GetAsync("WeatherForecast");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
 }
 ```
 
