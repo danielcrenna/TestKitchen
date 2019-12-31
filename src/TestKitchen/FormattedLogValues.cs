@@ -12,14 +12,15 @@ namespace TestKitchen
 	public readonly struct FormattedLogValues : IReadOnlyList<KeyValuePair<string, object>>
 	{
 		internal const int MaxCachedFormatters = 1024;
+
+		private static readonly ConcurrentDictionary<string, LogValuesFormatter> Formatters = new ConcurrentDictionary<string, LogValuesFormatter>();
+		
 		private const string NullFormat = "[null]";
 		private static int _count;
-		private static readonly ConcurrentDictionary<string, LogValuesFormatter> _formatters = new ConcurrentDictionary<string, LogValuesFormatter>();
 		private readonly LogValuesFormatter _formatter;
 		private readonly object[] _values;
 		private readonly string _originalMessage;
 
-		// for testing purposes
 		internal LogValuesFormatter Formatter => _formatter;
 
 		public FormattedLogValues(string format, params object[] values)
@@ -28,14 +29,14 @@ namespace TestKitchen
 			{
 				if (_count >= MaxCachedFormatters)
 				{
-					if (!_formatters.TryGetValue(format, out _formatter))
+					if (!Formatters.TryGetValue(format, out _formatter))
 					{
 						_formatter = new LogValuesFormatter(format);
 					}
 				}
 				else
 				{
-					_formatter = _formatters.GetOrAdd(format, f =>
+					_formatter = Formatters.GetOrAdd(format, f =>
 					{
 						Interlocked.Increment(ref _count);
 						return new LogValuesFormatter(f);
@@ -84,7 +85,7 @@ namespace TestKitchen
 
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
-			for (int i = 0; i < Count; ++i)
+			for (var i = 0; i < Count; ++i)
 			{
 				yield return this[i];
 			}

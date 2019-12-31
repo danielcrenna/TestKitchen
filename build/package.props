@@ -1,0 +1,17 @@
+<Project>
+
+  <PropertyGroup>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Authors>Daniel Crenna &amp; Contributors</Authors>
+    <Description>TestKitchen is a small library for testing in .NET.</Description>
+    <Copyright>Copyright © Daniel Crenna &amp; Contributors. All rights reserved.</Copyright>
+    <PackageIconUrl>https://raw.githubusercontent.com/danielcrenna/TestKitchen/master/assets/logo.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/danielcrenna/TestKitchen</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/danielcrenna/TestKitchen</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>dotnet-core testing</PackageTags>
+    <PackageVersion>0.0.1</PackageVersion>
+  </PropertyGroup>
+
+</Project>

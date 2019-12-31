@@ -2,20 +2,22 @@
 
   <Import Project="$(ProjectDir)..\..\build\package.props" />
   <Import Project="$(ProjectDir)..\..\build\build.props" />
-  
+
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Configurations>Debug;Release;Package;Package</Configurations>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0" />
-    <PackageReference Include="System.Text.Json" Version="4.7.0" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" Version="16.4.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\TypeKitchen\src\TypeKitchen\TypeKitchen.csproj" />
+    <ProjectReference Include="..\TestKitchen\TestKitchen.csproj" />
   </ItemGroup>
 
 </Project>

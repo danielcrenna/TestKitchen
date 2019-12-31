@@ -3,24 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsPackable>false</IsPackable>
-    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="3.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TestKitchen.TestAdapter\TestKitchen.TestAdapter.csproj" />
-    <ProjectReference Include="..\DemoApp\DemoApp.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="xunit.runner.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>  
 
 </Project>
