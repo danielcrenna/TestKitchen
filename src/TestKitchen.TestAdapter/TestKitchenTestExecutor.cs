@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -18,7 +19,10 @@ namespace TestKitchen.TestAdapter
 
         public void RunTests(IEnumerable<TestCase> tests, IRunContext context, IFrameworkHandle handle)
         {
-            var fixture = new TestFixture(new ServiceCollection());
+			if(!Trace.Listeners.OfType<TestResultTraceListener>().Any())
+				Trace.Listeners.Add(new TestResultTraceListener());
+			
+			var fixture = new TestFixture(new ServiceCollection());
             fixture.AddSingleton(fixture); // allow registration in test constructors
              
             using var ctx = new TestContext(fixture, new VsTestRecorder(handle));
@@ -44,7 +48,20 @@ namespace TestKitchen.TestAdapter
 			ctx.End();
         }
 
-        private static void ExecuteUnhandledExceptionsTest(string source, ITestExecutionRecorder recorder)
+        public void RunTests(IEnumerable<string> sources, IRunContext context, IFrameworkHandle handle)
+        {
+	        foreach (var source in sources)
+	        {
+		        handle.SendMessage(TestMessageLevel.Informational, $"Running all tests in {Path.GetFileName(source)}");
+	        }
+        }
+
+        public void Cancel()
+        {
+
+        }
+
+		private static void ExecuteUnhandledExceptionsTest(string source, ITestExecutionRecorder recorder)
         {
             recorder.SendMessage(TestMessageLevel.Informational,
                 $"Running exception coverage on {Path.GetFileName(source)}");
@@ -153,7 +170,11 @@ namespace TestKitchen.TestAdapter
 	            if (context.Skipped)
 		            testResult.Messages.Add(new TestResultMessage(Constants.Categories.Skipped, context.SkipReason));
 
-	            return testResult;
+	            var listener = Trace.Listeners.OfType<TestResultTraceListener>().SingleOrDefault();
+	            if (listener != null)
+					testResult.Messages.Add(listener.ToMessage());
+
+				return testResult;
             }
         }
 
@@ -245,19 +266,6 @@ namespace TestKitchen.TestAdapter
             assembly = Assembly.Load(assemblyName);
 
             return assembly;
-        }
-
-        public void RunTests(IEnumerable<string> sources, IRunContext context, IFrameworkHandle handle)
-        {
-            foreach (var source in sources)
-            {
-                handle.SendMessage(TestMessageLevel.Informational, $"Running all tests in {Path.GetFileName(source)}");
-            }
-        }
-        
-        public void Cancel()
-        {
-            
         }
     }
 }

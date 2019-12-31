@@ -15,7 +15,9 @@ namespace TestKitchen.TestAdapter
     {
         public void DiscoverTests(IEnumerable<string> sources, IDiscoveryContext discoveryContext, IMessageLogger logger, ITestCaseDiscoverySink discoverySink)
         {
-            try
+			// FIXME: Check RunSettings for options
+
+			try
             {
                 foreach (var source in sources)
                 {
