@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
- [assembly: AssemblyTitle("TestKitchen.TestAdapter")]
+ [assembly: AssemblyTitle("TestKitchen")]
  [assembly: AssemblyDescription("")]
  [assembly: AssemblyConfiguration("")]
  [assembly: AssemblyCompany("")]
- [assembly: AssemblyProduct("TestKitchen.TestAdapter")]
+ [assembly: AssemblyProduct("TestKitchen")]
  [assembly: AssemblyCopyright("Copyright © 2019 Daniel Crenna & Contributors")]
  [assembly: AssemblyTrademark("")]
  [assembly: AssemblyCulture("")]

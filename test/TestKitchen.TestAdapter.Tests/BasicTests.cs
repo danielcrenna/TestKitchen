@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace TestKitchen.TestAdapter.Tests
+namespace TestKitchen.Tests
 {
-    public class BasicTests
+	public class BasicTests
     {
         public BasicTests(TestContext context)
         {
@@ -18,7 +18,7 @@ namespace TestKitchen.TestAdapter.Tests
 
         public bool Two_string_instances_are_equal(TestContext context)
         {
-            return "aaa" == "aaa";
+            return "aaa".Equals("AAA", StringComparison.OrdinalIgnoreCase);
         }
 
         public bool Handles_exceptions()

@@ -32,18 +32,18 @@ namespace TestKitchen
 	        _fixture?.Dispose();
         }
 
+        private bool NextBoolean()
+        {
+	        return _random.Next(0, 2) == 1;
+        }
+
         public void Maybe(Action action)
         {
 	        var result = NextBoolean();
 	        _recorder.LogInfo("Maybe: " + result);
 
 	        if (result)
-				action();
-		}
-
-        private bool NextBoolean()
-        {
-	        return _random.Next(0, 2) == 1;
+		        action();
         }
 
         public void MaybeRepeat(int n, Action action)

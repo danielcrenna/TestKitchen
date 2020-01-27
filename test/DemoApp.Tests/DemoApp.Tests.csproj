@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TestKitchen.TestAdapter\TestKitchen.TestAdapter.csproj" />
-    <ProjectReference Include="..\DemoApp\DemoApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>

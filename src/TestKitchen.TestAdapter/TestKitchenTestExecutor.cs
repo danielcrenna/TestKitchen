@@ -35,13 +35,7 @@ namespace TestKitchen.TestAdapter
 
                 handle.SendMessage(TestMessageLevel.Informational,
                     $"Evaluating test at path {Path.GetFileName(test.Source)}");
-
-                if (test.FullyQualifiedName.Contains(Constants.VirtualTests.UnhandledExceptions))
-                {
-                    ExecuteUnhandledExceptionsTest(test.Source, handle);
-                    continue;
-                }
-
+				 
                 ExecuteStandardTest(handle, test, type, method, ctx);
             }
 
@@ -56,79 +50,39 @@ namespace TestKitchen.TestAdapter
 	        }
         }
 
-        public void Cancel()
+        public void Cancel() { }
+
+		private static void ExecuteStandardTest(ITestExecutionRecorder recorder, TestCase test, Type type, MethodInfo method, TestContext context)
         {
+	        recorder.SendMessage(TestMessageLevel.Informational, "Creating instance for type " + type.FullName);
 
-        }
+			object instance = null;
 
-		private static void ExecuteUnhandledExceptionsTest(string source, ITestExecutionRecorder recorder)
-        {
-            recorder.SendMessage(TestMessageLevel.Informational,
-                $"Running exception coverage on {Path.GetFileName(source)}");
-
-            foreach (var method in source.EnumerateTestMethods(out var assembly, recorder))
-            {
-                var test = TestFactory.CreateExceptionCoverageTest(assembly.GetName().Name, source);
-                
-                ExecuteUnhandledExceptionsTest(test, method, recorder);
-            }
-        }
-
-        private static void ExecuteUnhandledExceptionsTest(TestCase test, MemberInfo method, ITestExecutionRecorder recorder)
-        {
-            recorder.SendMessage(TestMessageLevel.Informational, "Starting test");
-            recorder.RecordStart(test);
-
-            var type = method.DeclaringType ?? throw new InvalidOperationException();
-            var analyzer = new ExceptionAnalyzer(method);
-            
-            var thrown = analyzer.GetExceptionsThrown().AsList();
-            var handled = analyzer.GetExceptionsHandled().AsList();
-            var unhandled = analyzer.GetExceptionsUnhandled().AsList();
-
-            var outcome = handled.Count >= thrown.Count ? TestOutcome.Passed : TestOutcome.Failed;
-            recorder.RecordEnd(test, outcome);
-            recorder.SendMessage(TestMessageLevel.Informational, $"{type}: {method.Name} handles {handled.Count()} exceptions and throws {thrown.Count()}");
-
-            var result = new TestResult(test)
-            {
-                Outcome = outcome, 
-                DisplayName = method.Name.Replace("_", " ")
-            };
-
-            if (outcome != TestOutcome.Passed)
-            {
-                var errorMessage = Pooling.StringBuilderPool.Scoped(sb =>
-                {
-                    foreach (var exception in unhandled)
-                    {
-                        sb.AppendLine($"{exception.Name} is potentially thrown by executed code, but is not handled in user code.");
-                    }
-                });
-
-                result.ErrorMessage = errorMessage;
-            }
-
-            recorder.RecordResult(result);
-        }
-
-        private static void ExecuteStandardTest(ITestExecutionRecorder recorder, TestCase test, Type type, MethodInfo method, TestContext context)
-        {
-	        var instance = Instancing.CreateInstance(type, context);
-
-			try
-
-            {
-	            var accessor = CallAccessor.Create(method);
-	            var occurrences = 0;
-	            recorder.RecordResult(DutyCycle(accessor, ++occurrences));
-
-	            while (!context.Skipped && context.RepeatCount > 0)
-	            {
-		            recorder.RecordResult(DutyCycle(accessor, ++occurrences));
-					context.RepeatCount--;
-	            }
+	        var ctor = type.GetConstructor(new[] {typeof(TestContext)});
+			if(ctor != null)
+			{
+				instance = Activator.CreateInstance(type, context);
 			}
+	        
+	        try
+	        {
+		        recorder.SendMessage(TestMessageLevel.Informational, "Running standard test");
+				
+		        var accessor = CallAccessor.Create(method);
+		        var occurrences = 0;
+		        recorder.RecordResult(DutyCycle(accessor, ++occurrences));
+
+		        while (!context.Skipped && context.RepeatCount > 0)
+		        {
+			        recorder.RecordResult(DutyCycle(accessor, ++occurrences));
+			        context.RepeatCount--;
+		        }
+	        }
+	        catch (Exception ex)
+	        {
+		        recorder.SendMessage(TestMessageLevel.Error, ex.Message);
+		        throw;
+	        }
             finally
             {
 	            context.Dispose();
@@ -140,7 +94,7 @@ namespace TestKitchen.TestAdapter
 	            {
 		            var clone = new TestCase
 		            {
-			            DisplayName = $"{test.DisplayName} #{occurrence}",
+			            DisplayName = $"{test.DisplayName ?? "<No Name>"} #{occurrence}",
 			            ExecutorUri = test.ExecutorUri,
 			            FullyQualifiedName = test.FullyQualifiedName,
 			            Id = test.Id,
@@ -196,9 +150,9 @@ namespace TestKitchen.TestAdapter
 
             var lastDot = testName.LastIndexOf(".", StringComparison.Ordinal);
             var typeName = testName.Substring(0, lastDot);
-            if (typeName.Contains(Constants.VirtualTests.Namespace))
+            if (typeName.StartsWith(Constants.VirtualTests.Namespace))
             {
-                logger.SendMessage(TestMessageLevel.Informational, $"Test is virtual");
+                logger.SendMessage(TestMessageLevel.Informational, "Test is virtual");
                 type = null;
                 method = null;
                 return true;

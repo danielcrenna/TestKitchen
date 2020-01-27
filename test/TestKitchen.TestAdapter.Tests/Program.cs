@@ -1,4 +1,4 @@
-﻿namespace TestKitchen.TestAdapter.Tests
+﻿namespace TestKitchen.Tests
 {
     public class Program
     {

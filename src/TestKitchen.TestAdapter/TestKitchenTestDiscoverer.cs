@@ -47,7 +47,7 @@ namespace TestKitchen.TestAdapter
         
         private static IEnumerable<TestCase> CreateVirtualTestCases(string assemblyName, string source)
         {
-            yield return TestFactory.CreateExceptionCoverageTest(assemblyName, source);
+	        yield break;
         }
 
         private static TestCase CreateTestCase(MemberInfo member, string source)
