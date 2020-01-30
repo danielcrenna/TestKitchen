@@ -10,6 +10,7 @@
         public static class Categories
         {
             public const string Skipped = nameof(Skipped);
+            public const string Failed = nameof(Failed);
         }
     }
 }

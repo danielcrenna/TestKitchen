@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
-namespace TestKitchen.TestAdapter
+namespace TestKitchen.TestAdapter.Internal
 {
     internal static class AssemblyExtensions
     {

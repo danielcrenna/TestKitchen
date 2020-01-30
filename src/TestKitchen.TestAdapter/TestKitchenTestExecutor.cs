@@ -60,9 +60,7 @@ namespace TestKitchen.TestAdapter
 
 	        var ctor = type.GetConstructor(new[] {typeof(TestContext)});
 			if(ctor != null)
-			{
 				instance = Activator.CreateInstance(type, context);
-			}
 	        
 	        try
 	        {
@@ -70,6 +68,7 @@ namespace TestKitchen.TestAdapter
 				
 		        var accessor = CallAccessor.Create(method);
 		        var occurrences = 0;
+				
 		        recorder.RecordResult(DutyCycle(accessor, ++occurrences));
 
 		        while (!context.Skipped && context.RepeatCount > 0)
@@ -78,12 +77,7 @@ namespace TestKitchen.TestAdapter
 			        context.RepeatCount--;
 		        }
 	        }
-	        catch (Exception ex)
-	        {
-		        recorder.SendMessage(TestMessageLevel.Error, ex.Message);
-		        throw;
-	        }
-            finally
+	        finally
             {
 	            context.Dispose();
             }
@@ -109,26 +103,47 @@ namespace TestKitchen.TestAdapter
 					test = clone;
 	            }
 
-	            recorder.SendMessage(TestMessageLevel.Informational, "Starting test");
-	            recorder.RecordStart(test);
 
-	            context.BeginTest();
-	            var result = ExecuteTestMethod(accessor, instance, context);
-	            context.EndTest();
+	            TestResult testResult = null;
 
-	            var outcome = context.Skipped ? TestOutcome.Skipped : result ? TestOutcome.Passed : TestOutcome.Failed;
-	            recorder.SendMessage(TestMessageLevel.Informational, $"{test.DisplayName} => {outcome.ToString().ToLowerInvariant()}");
-	            recorder.RecordEnd(test, outcome);
+	            try
+	            {
+		            recorder.SendMessage(TestMessageLevel.Informational, "Starting test");
+		            recorder.RecordStart(test);
 
-	            var testResult = new TestResult(test) {Outcome = outcome};
-	            if (context.Skipped)
-		            testResult.Messages.Add(new TestResultMessage(Constants.Categories.Skipped, context.SkipReason));
+		            context.BeginTest();
+		            var result = ExecuteTestMethod(accessor, instance, context);
+		            context.EndTest();
 
-	            var listener = Trace.Listeners.OfType<TestResultTraceListener>().SingleOrDefault();
-	            if (listener != null)
-					testResult.Messages.Add(listener.ToMessage());
+		            var outcome = context.Skipped ? TestOutcome.Skipped : result ? TestOutcome.Passed : TestOutcome.Failed;
+		            recorder.SendMessage(TestMessageLevel.Informational, $"{test.DisplayName} => {outcome.ToString().ToLowerInvariant()}");
 
-				return testResult;
+		            recorder.SendMessage(TestMessageLevel.Informational, "Ending test");
+		            recorder.RecordEnd(test, outcome);
+
+		            testResult = new TestResult(test) {Outcome = outcome};
+		            if (context.Skipped)
+			            testResult.Messages.Add(new TestResultMessage(Constants.Categories.Skipped, context.SkipReason));
+
+		            var listener = Trace.Listeners.OfType<TestResultTraceListener>().SingleOrDefault();
+		            if (listener != null)
+			            testResult.Messages.Add(listener.ToMessage());
+
+		            return testResult;
+	            }
+	            catch (Exception ex)
+	            {
+		            recorder.SendMessage(TestMessageLevel.Error, ex.Message);
+		            testResult ??= new TestResult(test);
+
+		            testResult.Messages.Add(new TestResultMessage(Constants.Categories.Failed, "Test failed because an exception prevented execution."));
+
+		            testResult.Outcome = TestOutcome.Failed;
+		            testResult.ErrorMessage = ex.Message;
+		            testResult.ErrorStackTrace = ex.StackTrace;
+
+		            return testResult;
+	            }
             }
         }
 

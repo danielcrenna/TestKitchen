@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
+﻿using System.Diagnostics;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
 namespace TestKitchen.TestAdapter
@@ -15,11 +16,19 @@ namespace TestKitchen.TestAdapter
 		public void LogInfo(string message)
 		{
 			_inner.SendMessage(TestMessageLevel.Informational, message);
+			Trace.TraceInformation(message);
+		}
+
+		public void LogWarning(string message)
+		{
+			_inner.SendMessage(TestMessageLevel.Warning, message);
+			Trace.TraceWarning(message);
 		}
 
 		public void LogError(string message)
 		{
 			_inner.SendMessage(TestMessageLevel.Error, message);
+			Trace.TraceError(message);
 		}
 	}
 }

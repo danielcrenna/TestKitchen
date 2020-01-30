@@ -96,16 +96,16 @@ namespace TestKitchen
 				: _perTestProvider.GetService(serviceType) ?? _serviceProvider.GetService(serviceType);
 		}
 
-		public void Begin()
+		internal void Begin()
 		{
 			_serviceScope = _services.BuildServiceProvider().CreateScope();
 			_serviceProvider = _serviceScope.ServiceProvider;
 		}
 
-		public void BeginTest() => _perTestProvider = _perTestScope.BuildServiceProvider();
-		public void EndTest() => _perTestProvider = null;
+		internal void BeginTest() => _perTestProvider = _perTestScope.BuildServiceProvider();
+		internal void EndTest() => _perTestProvider = null;
 
-		public void End()
+		internal void End()
 		{
 			_serviceScope?.Dispose();
 			_serviceProvider = null;

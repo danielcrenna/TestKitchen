@@ -96,9 +96,9 @@ namespace TestKitchen
 
 		public object GetService(Type serviceType) => _fixture.GetService(serviceType);
 
-		public void Begin() => _fixture.Begin();
-		public void BeginTest() => _fixture.BeginTest();
-		public void EndTest() => _fixture.EndTest();
-		public void End() => _fixture.End();
+		internal void Begin() => _fixture.Begin();
+		internal void BeginTest() => _fixture.BeginTest();
+		internal void EndTest() => _fixture.EndTest();
+		internal void End() => _fixture.End();
     }
 }
