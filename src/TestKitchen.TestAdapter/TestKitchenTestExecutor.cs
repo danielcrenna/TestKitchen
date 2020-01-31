@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
@@ -21,22 +23,40 @@ namespace TestKitchen.TestAdapter
         {
 			if(!Trace.Listeners.OfType<TestResultTraceListener>().Any())
 				Trace.Listeners.Add(new TestResultTraceListener());
-			
-			var fixture = new TestFixture(new ServiceCollection());
-            fixture.AddSingleton(fixture); // allow registration in test constructors
+
+			var services = new ServiceCollection();
+			var fixture = new TestFixture(services);
+
+			// allow registration in test constructors
+            fixture.TryAddSingleton(fixture); 
+			fixture.TryAddSingleton<IServiceCollection>(fixture);
+			fixture.TryAddSingleton<IServiceProvider>(fixture);
              
             using var ctx = new TestContext(fixture, new VsTestRecorder(handle));
+
+            var map = new Dictionary<TestCase, (MethodInfo, object)>();
+
+            foreach (var test in tests)
+            {
+	            if (!CanExecuteTest(test, handle, out var type, out var method))
+		            continue;
+	            
+	            var instance = GetTestContainerInstance(type, fixture, handle);
+	            if (instance == null)
+		            continue;
+
+	            map[test] = (method, instance);
+            }
+
             ctx.Begin();
 
-			foreach (var test in tests)
+            foreach (var test in map.Keys)
             {
-                if (!CanExecuteTest(test, handle, out var type, out var method))
-                    continue;
-
                 handle.SendMessage(TestMessageLevel.Informational,
                     $"Evaluating test at path {Path.GetFileName(test.Source)}");
-				 
-                ExecuteStandardTest(handle, test, type, method, ctx);
+
+                var (method, instance) = map[test];
+				ExecuteStandardTest(handle, test, method, ctx, instance);
             }
 
 			ctx.End();
@@ -52,17 +72,11 @@ namespace TestKitchen.TestAdapter
 
         public void Cancel() { }
 
-		private static void ExecuteStandardTest(ITestExecutionRecorder recorder, TestCase test, Type type, MethodInfo method, TestContext context)
-        {
-	        recorder.SendMessage(TestMessageLevel.Informational, "Creating instance for type " + type.FullName);
+		private static void ExecuteStandardTest(ITestExecutionRecorder recorder, TestCase test, MethodInfo method, TestContext context, object instance)
+		{
+			recorder.SendMessage(TestMessageLevel.Informational, $"Creating instance for type {method.DeclaringType?.FullName}");
 
-			object instance = null;
-
-	        var ctor = type.GetConstructor(new[] {typeof(TestContext)});
-			if(ctor != null)
-				instance = Activator.CreateInstance(type, context);
-	        
-	        try
+			try
 	        {
 		        recorder.SendMessage(TestMessageLevel.Informational, "Running standard test");
 				
@@ -147,7 +161,48 @@ namespace TestKitchen.TestAdapter
             }
         }
 
-        private static bool ExecuteTestMethod(IMethodCallAccessor accessor, object instance, TestContext ctx)
+		// ReSharper disable once SuggestBaseTypeForParameter
+		private static object GetTestContainerInstance(Type type, TestFixture fixture, IMessageLogger logger)
+		{
+			object instance = null;
+
+			try
+			{
+				if (type.GetConstructor(new[] {typeof(TestFixture)}) != null)
+				{
+					logger?.SendMessage(TestMessageLevel.Informational, $"{type.Name}(TestFixture fixture) {{ ... }}");
+					instance = Instancing.CreateInstance(type, fixture);
+				}
+				else if (type.GetConstructor(new[] {typeof(IServiceCollection)}) != null)
+				{
+					logger?.SendMessage(TestMessageLevel.Informational, $"{type.Name}(IServiceCollection services) {{ ... }}");
+					instance = Instancing.CreateInstance(type, fixture);
+				}
+				else if (type.GetConstructor(new[] {typeof(IServiceProvider)}) != null)
+				{
+					logger?.SendMessage(TestMessageLevel.Informational, $"{type.Name}(IServiceProvider serviceProvider) {{ ... }}");
+					instance = Instancing.CreateInstance(type, fixture);
+				}
+				else if (type.GetConstructor(Type.EmptyTypes) != null)
+				{
+					logger?.SendMessage(TestMessageLevel.Informational, $"{type.Name}() {{ ... }}");
+					instance = Instancing.CreateInstance(type);
+				}
+			}
+			catch (Exception e)
+			{
+				logger?.SendMessage(TestMessageLevel.Error, e.ToString());
+				instance = null;
+			}
+
+			if (instance != null)
+				return instance;
+
+			logger?.SendMessage(TestMessageLevel.Error, "Could not find a suitable constructor for the test containing class");
+			return null;
+		}
+
+		private static bool ExecuteTestMethod(IMethodCallAccessor accessor, object instance, TestContext ctx)
         {
 	        bool result;
 	        if (accessor.Parameters.Length == 0)
@@ -178,8 +233,7 @@ namespace TestKitchen.TestAdapter
             var methodName = testName.Substring(lastDot + 1);
             logger.SendMessage(TestMessageLevel.Informational, $"Method name = {methodName}");
 
-            type = Type.GetType(typeName, an => ResolveAssembly(an, test.Source, logger),
-                (a, n, i) => ResolveType(a, n, i, test.Source, logger), false, false);
+            type = Type.GetType(typeName, an => ResolveAssembly(an, test.Source, logger), (a, n, i) => ResolveType(a, n, i, test.Source, logger), false, false);
             if (type == null)
             {
                 logger.SendMessage(TestMessageLevel.Warning, $"Could not find type '{typeName}'");

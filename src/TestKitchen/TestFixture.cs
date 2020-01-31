@@ -91,9 +91,17 @@ namespace TestKitchen
 
 		public object GetService(Type serviceType)
 		{
-			return serviceType == typeof(TestFixture)
-				? this
-				: _perTestProvider.GetService(serviceType) ?? _serviceProvider.GetService(serviceType);
+			if (serviceType == typeof(TestFixture) || 
+			    serviceType == typeof(IServiceCollection) ||
+			    serviceType == typeof(IServiceProvider))
+				return this;
+
+			var service = _perTestProvider?.GetService(serviceType);
+			if (service != null)
+				return service;
+
+			service = _serviceProvider?.GetService(serviceType);
+			return service;
 		}
 
 		internal void Begin()
