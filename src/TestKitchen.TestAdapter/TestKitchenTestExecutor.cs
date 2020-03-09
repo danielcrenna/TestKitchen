@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
@@ -217,15 +218,16 @@ namespace TestKitchen.TestAdapter
 			return null;
 		}
 
-		private static bool ExecuteTestMethod(IMethodCallAccessor accessor, object instance, TestContext ctx)
+		private static bool ExecuteTestMethod(IMethodCallAccessor accessor, object instance, IServiceProvider ctx)
 		{
-			bool result;
-			if (accessor.Parameters.Length == 0)
-				result = (bool) accessor.Call(instance);
-			else
-				result = (bool) accessor.Call(instance, ctx);
+			var result = accessor.Parameters.Length == 0 ? accessor.Call(instance) : accessor.Call(instance, ctx);
 
-			return result;
+			return result switch
+			{
+				Task<bool> task => task.Result,
+				bool flag => flag,
+				_ => false
+			};
 		}
 
 		private static bool CanExecuteTest(TestCase test, IMessageLogger logger, out Type type, out MethodInfo method)

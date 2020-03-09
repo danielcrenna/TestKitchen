@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace TestKitchen
 {
@@ -20,13 +21,16 @@ namespace TestKitchen
 			var types = assembly.GetTypes();
 			foreach (var type in types)
 			{
+				if (type.IsAbstract)
+					continue; // FIXME: Need a solution for abstract test banks
+
 				if (!type.Name.EndsWith("Test") && !type.Name.EndsWith("Tests"))
 					continue;
 
 				var methods = type.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
 				foreach (var method in methods)
 				{
-					if (method.ReturnType != typeof(bool))
+					if (method.ReturnType != typeof(bool) && method.ReturnType != typeof(Task<bool>))
 						continue;
 
 					messageSink?.LogInfo($"Found test: {method.Name.Replace("_", " ")}");
