@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Daniel Crenna & Contributors. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
@@ -10,11 +13,8 @@ namespace TestKitchen.TestAdapter
 	{
 		private readonly Queue<string> _queue;
 
-		public TestResultTraceListener()
-		{
-			_queue = new Queue<string>();
-		}
-		
+		public TestResultTraceListener() => _queue = new Queue<string>();
+
 		public override void Write(string message)
 		{
 			_queue.Enqueue(message);
@@ -33,7 +33,7 @@ namespace TestKitchen.TestAdapter
 				while (_queue.TryDequeue(out var line))
 					sb.Append(line);
 			});
-			
+
 			return new TestResultMessage(TestResultMessage.StandardOutCategory, text);
 		}
 	}

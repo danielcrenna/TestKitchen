@@ -1,17 +1,16 @@
-﻿using System.Diagnostics;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
+﻿// Copyright (c) Daniel Crenna & Contributors. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
 namespace TestKitchen.TestAdapter
 {
-	public class VsTestRecorder : ITestRecorder
+	public class VsTestMessageSink : ITestMessageSink
 	{
-		private readonly ITestExecutionRecorder _inner;
+		private readonly IMessageLogger _inner;
 
-		public VsTestRecorder(ITestExecutionRecorder inner)
-		{
-			_inner = inner;
-		}
+		public VsTestMessageSink(IMessageLogger inner) => _inner = inner;
 
 		public void LogInfo(string message)
 		{
