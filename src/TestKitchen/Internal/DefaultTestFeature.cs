@@ -30,7 +30,7 @@ namespace TestKitchen.Internal
 			_testMethodFilterConvention = testMethodFilterConvention;
 		}
 
-		public IEnumerable<(Type, MethodInfo)> EnumerateTestMethods(Assembly assembly, ITestMessageSink messageSink)
+		public IEnumerable<MethodInfo> EnumerateTestMethods(Assembly assembly, ITestMessageSink messageSink)
 		{
 			if (!_assemblyFilterConvention.IsValidTestAssembly(assembly))
 				yield break;
@@ -42,13 +42,12 @@ namespace TestKitchen.Internal
 			{
 				if (visited.Contains(type))
 					continue;
+
 				visited.Add(type);
 
 				if (!_testClassFilterConvention.IsValidTestClass(type))
 					continue;
 				
-				//
-				// Regular on-class test methods
 				var methods = type.GetMethods(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
 				foreach (var method in methods)
 				{
@@ -57,7 +56,7 @@ namespace TestKitchen.Internal
 					if (!_testMethodFilterConvention.IsValidTestMethod(type, method))
 						continue;
 					messageSink?.LogInfo($"Found test: {type.FullName}.{method.Name}");
-					yield return (type, method);
+					yield return method;
 				}
 			}
 		}

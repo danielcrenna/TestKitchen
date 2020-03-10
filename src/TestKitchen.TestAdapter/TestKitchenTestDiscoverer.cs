@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
@@ -31,11 +32,11 @@ namespace TestKitchen.TestAdapter
 			{
 				foreach (var source in sources)
 				{
-					foreach (var (type, method) in source.EnumerateTestMethods(features, recorder))
+					foreach (var method in source.EnumerateTestMethods(features, recorder))
 					{
 						try
 						{
-							discoverySink.SendTestCase(CreateTestCase(type, method, source, logger));
+							discoverySink.SendTestCase(CreateTestCase(method, source, logger));
 						}
 						catch (Exception e)
 						{
@@ -50,15 +51,15 @@ namespace TestKitchen.TestAdapter
 			}
 		}
 
-		private static TestCase CreateTestCase(Type type, MemberInfo member, string source, IMessageLogger logger)
+		private static TestCase CreateTestCase(MemberInfo member, string source, IMessageLogger logger)
 		{
-			var memberDeclaringType = member.DeclaringType ?? type;
+			Debug.Assert(member.DeclaringType != null, "member.DeclaringType != null");
 
-			var fullyQualifiedName = $"{memberDeclaringType.FullName}.{member.Name}";
+			var fullyQualifiedName = $"{member.DeclaringType.FullName}.{member.Name}";
 			logger?.SendMessage(TestMessageLevel.Informational, $"Creating test case for {fullyQualifiedName}");
 
 			using var session = new DiaSession(source);
-			var data = session.GetNavigationData(memberDeclaringType.FullName, member.Name);
+			var data = session.GetNavigationData(member.DeclaringType.FullName, member.Name);
 
 			var test = new TestCase(fullyQualifiedName, new Uri(TestKitchenTestExecutor.ExecutorUri, UriKind.Absolute), source)
 			{

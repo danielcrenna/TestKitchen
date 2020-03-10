@@ -21,9 +21,9 @@ namespace TestKitchen.TestAdapter.Internal
 			       Path.GetFileName(source) == "TestKitchen.dll";
 		}
 
-		public static IEnumerable<(Type, MethodInfo)> EnumerateTestMethods(this string source, IEnumerable<ITestFeature> features, ITestMessageSink messageSink)
+		public static IEnumerable<MethodInfo> EnumerateTestMethods(this string source, IEnumerable<ITestFeature> features, ITestMessageSink messageSink)
 		{
-			var methods = new HashSet<(Type, MethodInfo)>();
+			var methods = new HashSet<MethodInfo>();
 
 			if (ShouldIgnoreAssembly(source))
 				return methods;
