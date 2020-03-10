@@ -7,6 +7,7 @@ using System.Reflection;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
+using TestKitchen.Internal;
 using TestKitchen.TestAdapter.Internal;
 
 namespace TestKitchen.TestAdapter
@@ -30,11 +31,11 @@ namespace TestKitchen.TestAdapter
 			{
 				foreach (var source in sources)
 				{
-					foreach (var method in source.EnumerateTestMethods(features, recorder))
+					foreach (var (type, method) in source.EnumerateTestMethods(features, recorder))
 					{
 						try
 						{
-							discoverySink.SendTestCase(CreateTestCase(method, source));
+							discoverySink.SendTestCase(CreateTestCase(type, method, source, logger));
 						}
 						catch (Exception e)
 						{
@@ -49,13 +50,17 @@ namespace TestKitchen.TestAdapter
 			}
 		}
 
-		private static TestCase CreateTestCase(MemberInfo member, string source)
+		private static TestCase CreateTestCase(Type type, MemberInfo member, string source, IMessageLogger logger)
 		{
-			using var session = new DiaSession(source);
-			var data = session.GetNavigationData(member.DeclaringType?.FullName, member.Name);
+			var memberDeclaringType = member.DeclaringType ?? type;
 
-			var executorUri = new Uri(TestKitchenTestExecutor.ExecutorUri, UriKind.Absolute);
-			var test = new TestCase($"{member.DeclaringType?.FullName}.{member.Name}", executorUri, source)
+			var fullyQualifiedName = $"{memberDeclaringType.FullName}.{member.Name}";
+			logger?.SendMessage(TestMessageLevel.Informational, $"Creating test case for {fullyQualifiedName}");
+
+			using var session = new DiaSession(source);
+			var data = session.GetNavigationData(memberDeclaringType.FullName, member.Name);
+
+			var test = new TestCase(fullyQualifiedName, new Uri(TestKitchenTestExecutor.ExecutorUri, UriKind.Absolute), source)
 			{
 				CodeFilePath = data.FileName,
 				LineNumber = data.MinLineNumber + 1,
